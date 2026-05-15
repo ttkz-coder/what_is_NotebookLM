@@ -225,16 +225,18 @@
   .steps-wrap { margin-bottom: 2rem; }
 
   .step-row {
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    padding: 1.1rem 0;
     border-bottom: 0.5px solid var(--border);
     cursor: pointer;
-    transition: background 0.1s;
   }
 
   .step-row:last-child { border-bottom: none; }
+
+  .step-header {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 1rem 0 1rem;
+  }
 
   .step-num {
     width: 34px;
@@ -258,30 +260,51 @@
     color: #fff;
   }
 
-  .step-body { flex: 1; }
+  .step-header-body { flex: 1; }
 
   .step-title {
     font-size: 15px;
     font-weight: 500;
     color: var(--text-primary);
-    margin-bottom: 2px;
+    margin-bottom: 0;
     line-height: 1.5;
   }
 
-  .step-desc {
-    font-size: 13px;
-    color: var(--text-secondary);
-    line-height: 1.75;
+  .step-subtitle {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 2px;
+  }
+
+  .step-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease, opacity 0.25s;
+    transition: max-height 0.35s ease, opacity 0.25s;
     opacity: 0;
   }
 
-  .step-row.active .step-desc {
-    max-height: 300px;
+  .step-row.active .step-content {
+    max-height: 600px;
     opacity: 1;
-    margin-top: 6px;
+    padding-bottom: 1.25rem;
+  }
+
+  .step-inner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+  }
+
+  @media (max-width: 560px) {
+    .step-inner { grid-template-columns: 1fr; }
+    .step-mockup { order: -1; }
+  }
+
+  .step-desc-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.75;
   }
 
   .step-tag {
@@ -295,6 +318,13 @@
     margin-top: 10px;
   }
 
+  .step-mockup {
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+  }
+
   .chevron-icon {
     font-size: 16px;
     color: var(--text-tertiary);
@@ -304,6 +334,168 @@
   }
 
   .step-row.active .chevron-icon { transform: rotate(180deg); }
+
+  /* mockup internals */
+  .mk-bar {
+    background: var(--bg-card);
+    border-bottom: 0.5px solid var(--border);
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mk-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .mk-url {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    margin-left: 4px;
+  }
+  .mk-body { padding: 10px; }
+  .mk-title { font-size: 11px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
+  .mk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .mk-card {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 8px;
+  }
+  .mk-card-label { font-size: 9px; color: var(--text-secondary); }
+  .mk-card-sub { font-size: 8px; color: var(--text-tertiary); margin-top: 2px; }
+  .mk-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--green-mid);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .mk-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    color: var(--green-mid);
+    font-size: 10px;
+    border: 1px solid var(--green-mid);
+    padding: 4px 10px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .mk-source-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 0;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+  .mk-source-row:last-child { border-bottom: none; }
+  .mk-icon { font-size: 12px; color: var(--green-mid); }
+  .mk-source-name { flex: 1; font-size: 10px; color: var(--text-primary); }
+  .mk-badge {
+    font-size: 8px;
+    background: var(--green-bg);
+    color: var(--green-dark);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .mk-chat-q {
+    background: var(--green-bg);
+    border-radius: 8px 8px 2px 8px;
+    padding: 6px 10px;
+    font-size: 10px;
+    color: var(--green-dark);
+    margin-bottom: 6px;
+    text-align: right;
+    margin-left: 20%;
+  }
+  .mk-chat-a {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border);
+    border-radius: 8px 8px 8px 2px;
+    padding: 6px 10px;
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-right: 20%;
+    line-height: 1.5;
+  }
+  .mk-cite {
+    display: inline-block;
+    background: #E6F1FB;
+    color: #185FA5;
+    font-size: 8px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    margin-top: 4px;
+  }
+  .mk-audio-panel {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 6px;
+  }
+  .mk-audio-title { font-size: 10px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+  .mk-waveform {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 20px;
+    margin: 6px 0;
+  }
+  .mk-waveform span {
+    display: inline-block;
+    width: 3px;
+    background: var(--green-mid);
+    border-radius: 2px;
+    opacity: 0.7;
+  }
+  .mk-play {
+    width: 28px; height: 28px;
+    background: var(--green-mid);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .mk-play i { font-size: 12px; color: #fff; }
+  .mk-audio-row { display: flex; align-items: center; }
+  .mk-audio-time { font-size: 9px; color: var(--text-tertiary); }
+  .mk-note-card {
+    background: var(--bg-card);
+    border: 0.5px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+  }
+  .mk-note-title { font-size: 10px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .mk-note-body { font-size: 9px; color: var(--text-secondary); line-height: 1.5; }
+  .mk-export-row {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+  }
+  .mk-export-chip {
+    font-size: 9px;
+    background: var(--bg-secondary);
+    border: 0.5px solid var(--border);
+    color: var(--text-secondary);
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
 
   /* TIPS GRID */
   .tips-grid {
@@ -560,10 +752,10 @@
         <img src="data:image/jpeg;base64,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" alt="หน้าจอแอป Google แสดง NotebookLM ในรายการโปรด">
       </div>
       <div class="app-steps">
-        <h3>วิธีเปิด NotebookLM จากแอป Google บนมือถือและคอมพิวเตอร์</h3>
+        <h3>วิธีเปิด NotebookLM จากแอป Google บนมือถือ</h3>
         <div class="app-step-item">
           <div class="app-step-dot">1</div>
-          <div class="app-step-text">เปิดแอป <strong>Google</strong> บนมือถือและคอมพิวเตอร์ (แถบค้นหาหลักของ Google)</div>
+          <div class="app-step-text">เปิดแอป <strong>Google</strong> บนมือถือ (แถบค้นหาหลักของ Google)</div>
         </div>
         <div class="app-step-item">
           <div class="app-step-dot">2</div>
@@ -579,7 +771,7 @@
         </div>
         <div class="app-note">
           <i class="ti ti-info-circle" style="font-size:16px; flex-shrink:0; margin-top:1px;"></i>
-          <span>ต้องเข้าสู่ระบบด้วยบัญชี Google ก่อน และต้องมีการเชื่อมต่ออินเทอร์เน็ต ใช้งานได้ทั้ง iOS, Android, Windows และ Mac</span>
+          <span>ต้องเข้าสู่ระบบด้วยบัญชี Google ก่อน และต้องมีการเชื่อมต่ออินเทอร์เน็ต ใช้งานได้ทั้ง iOS และ Android</span>
         </div>
       </div>
     </div>
@@ -591,75 +783,234 @@
   <div class="section-label">วิธีใช้งาน — 5 ขั้นตอน</div>
 
   <div class="steps-wrap" id="steps-wrap">
+
+    <!-- STEP 1 -->
     <div class="step-row active" onclick="selectStep(0)">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <div class="step-title">เปิด NotebookLM และสร้าง Notebook ใหม่</div>
-        <div class="step-desc">
-          ไปที่ <strong>notebooklm.google.com</strong> แล้วกดปุ่ม "New Notebook"
-          ตั้งชื่อตามหัวข้อที่คุณสนใจ เช่น "งานวิจัย" หรือ "คอร์สเรียน"
-          แต่ละ Notebook เก็บข้อมูลแยกกันสามารถสร้างได้หลายอันตามต้องการ
-          <div class="step-tag">ต้องมีบัญชี Google</div>
+      <div class="step-header">
+        <div class="step-num">1</div>
+        <div class="step-header-body">
+          <div class="step-title">เปิด NotebookLM และสร้าง Notebook ใหม่</div>
+          <div class="step-subtitle">สร้าง workspace แยกสำหรับแต่ละหัวข้อ</div>
+        </div>
+        <i class="ti ti-chevron-down chevron-icon"></i>
+      </div>
+      <div class="step-content">
+        <div class="step-inner">
+          <div>
+            <div class="step-desc-text">
+              ไปที่ <strong>notebooklm.google.com</strong> แล้วกดปุ่ม <em>"+ New Notebook"</em>
+              ตั้งชื่อตามหัวข้อที่คุณสนใจ เช่น "งานวิจัย" หรือ "คอร์สเรียน"
+              แต่ละ Notebook เก็บข้อมูลแยกกัน สามารถสร้างได้หลายอันตามต้องการ
+            </div>
+            <div class="step-tag">ต้องมีบัญชี Google</div>
+          </div>
+          <div class="step-mockup">
+            <div class="mk-bar">
+              <span class="mk-dot" style="background:#ff6b6b;"></span>
+              <span class="mk-dot" style="background:#ffd93d;"></span>
+              <span class="mk-dot" style="background:#6bcb77;"></span>
+              <div class="mk-url">notebooklm.google.com</div>
+            </div>
+            <div class="mk-body">
+              <div class="mk-title">My Notebooks</div>
+              <div class="mk-grid">
+                <div class="mk-card">
+                  <div style="font-size:14px; margin-bottom:4px;">📓</div>
+                  <div class="mk-card-label">งานวิจัย 2024</div>
+                  <div class="mk-card-sub">3 sources</div>
+                </div>
+                <div class="mk-card" style="border: 1.5px dashed var(--green-mid); background: var(--green-bg); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-size:16px; color:var(--green-mid);">+</div>
+                  <div class="mk-card-label" style="color:var(--green-mid); margin-top:2px;">New Notebook</div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <i class="ti ti-chevron-down chevron-icon"></i>
     </div>
 
+    <!-- STEP 2 -->
     <div class="step-row" onclick="selectStep(1)">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <div class="step-title">อัปโหลดแหล่งข้อมูล (Sources)</div>
-        <div class="step-desc">
-          กด "+ Add source" แล้วเลือกได้จาก PDF, Google Docs, ลิงก์เว็บไซต์,
-          ลิงก์ YouTube หรือพิมพ์ข้อความวางลงตรง ๆ ก็ได้
-          อัปโหลดได้หลายไฟล์พร้อมกัน ระบบจะประมวลผลและพร้อมให้ใช้งานทันที
-          <div class="step-tag">รองรับได้ถึง 50 แหล่งต่อ Notebook</div>
+      <div class="step-header">
+        <div class="step-num">2</div>
+        <div class="step-header-body">
+          <div class="step-title">อัปโหลดแหล่งข้อมูล (Sources)</div>
+          <div class="step-subtitle">รองรับ PDF, Docs, YouTube, เว็บไซต์</div>
+        </div>
+        <i class="ti ti-chevron-down chevron-icon"></i>
+      </div>
+      <div class="step-content">
+        <div class="step-inner">
+          <div>
+            <div class="step-desc-text">
+              กด <em>"+ Add source"</em> แล้วเลือกได้จาก PDF, Google Docs, ลิงก์เว็บไซต์,
+              ลิงก์ YouTube หรือพิมพ์ข้อความวางลงตรง ๆ ก็ได้
+              อัปโหลดได้หลายไฟล์พร้อมกัน ระบบจะประมวลผลและพร้อมให้ใช้งานทันที
+            </div>
+            <div class="step-tag">รองรับได้ถึง 50 แหล่งต่อ Notebook</div>
+          </div>
+          <div class="step-mockup">
+            <div class="mk-bar">
+              <span class="mk-dot" style="background:#ff6b6b;"></span>
+              <span class="mk-dot" style="background:#ffd93d;"></span>
+              <span class="mk-dot" style="background:#6bcb77;"></span>
+              <div class="mk-url">Sources</div>
+            </div>
+            <div class="mk-body">
+              <div class="mk-btn"><i class="ti ti-plus" style="font-size:10px;"></i> Add source</div>
+              <div style="margin-top:8px;">
+                <div class="mk-source-row">
+                  <i class="ti ti-file-type-pdf mk-icon"></i>
+                  <span class="mk-source-name">research_paper.pdf</span>
+                  <span class="mk-badge">✓ Ready</span>
+                </div>
+                <div class="mk-source-row">
+                  <i class="ti ti-brand-youtube mk-icon" style="color:#e03131;"></i>
+                  <span class="mk-source-name">YouTube: AI Overview</span>
+                  <span class="mk-badge">✓ Ready</span>
+                </div>
+                <div class="mk-source-row">
+                  <i class="ti ti-world mk-icon" style="color:#1971c2;"></i>
+                  <span class="mk-source-name">website article link</span>
+                  <span class="mk-badge">✓ Ready</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <i class="ti ti-chevron-down chevron-icon"></i>
     </div>
 
+    <!-- STEP 3 -->
     <div class="step-row" onclick="selectStep(2)">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <div class="step-title">ถามคำถามในช่อง Chat</div>
-        <div class="step-desc">
-          พิมพ์คำถามอะไรก็ได้เกี่ยวกับเอกสาร เช่น "สรุปหัวข้อหลักให้หน่อย",
-          "ข้อแตกต่างระหว่าง A และ B คืออะไร?" หรือ "ยกตัวอย่างจากเอกสารให้หน่อย"
-          AI จะตอบพร้อมอ้างอิงว่าข้อมูลมาจากหน้าใดในเอกสารของคุณ
-          <div class="step-tag">มีการอ้างอิงแหล่งที่มาชัดเจน</div>
+      <div class="step-header">
+        <div class="step-num">3</div>
+        <div class="step-header-body">
+          <div class="step-title">ถามคำถามในช่อง Chat</div>
+          <div class="step-subtitle">AI ตอบพร้อมอ้างอิงจากเอกสารของคุณ</div>
+        </div>
+        <i class="ti ti-chevron-down chevron-icon"></i>
+      </div>
+      <div class="step-content">
+        <div class="step-inner">
+          <div>
+            <div class="step-desc-text">
+              พิมพ์คำถามอะไรก็ได้เกี่ยวกับเอกสาร เช่น <em>"สรุปหัวข้อหลักให้หน่อย"</em>,
+              <em>"ข้อแตกต่างระหว่าง A และ B คืออะไร?"</em>
+              AI จะตอบพร้อมอ้างอิงว่าข้อมูลมาจากหน้าใดในเอกสารของคุณ
+            </div>
+            <div class="step-tag">มีการอ้างอิงแหล่งที่มาชัดเจน</div>
+          </div>
+          <div class="step-mockup">
+            <div class="mk-bar">
+              <span class="mk-dot" style="background:#ff6b6b;"></span>
+              <span class="mk-dot" style="background:#ffd93d;"></span>
+              <span class="mk-dot" style="background:#6bcb77;"></span>
+              <div class="mk-url">Chat</div>
+            </div>
+            <div class="mk-body">
+              <div class="mk-chat-q">สรุปหัวข้อหลักให้หน่อย</div>
+              <div class="mk-chat-a">
+                เอกสารนี้กล่าวถึง 3 ประเด็นหลัก ได้แก่ การประยุกต์ใช้ AI, ผลกระทบต่อธุรกิจ และแนวโน้มในอนาคต...
+                <br>
+                <span class="mk-cite">📄 research_paper.pdf · หน้า 3</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <i class="ti ti-chevron-down chevron-icon"></i>
     </div>
 
+    <!-- STEP 4 -->
     <div class="step-row" onclick="selectStep(3)">
-      <div class="step-num">4</div>
-      <div class="step-body">
-        <div class="step-title">สร้าง Audio Overview ฟังเป็นพอดแคสต์</div>
-        <div class="step-desc">
-          กดปุ่ม "Generate" ใต้หัวข้อ Audio Overview
-          ระบบจะสร้างบทสนทนา 2 คน สรุปเนื้อหาทั้ง Notebook แบบธรรมชาติ
-          ฟังขณะเดินทาง ออกกำลังกาย หรือก่อนนอนได้เลย
-          <div class="step-tag">ภาษาอังกฤษหลัก / ไทยบางส่วน</div>
+      <div class="step-header">
+        <div class="step-num">4</div>
+        <div class="step-header-body">
+          <div class="step-title">สร้าง Audio Overview ฟังเป็นพอดแคสต์</div>
+          <div class="step-subtitle">บทสนทนา AI 2 คน สรุปเนื้อหาทั้ง Notebook</div>
+        </div>
+        <i class="ti ti-chevron-down chevron-icon"></i>
+      </div>
+      <div class="step-content">
+        <div class="step-inner">
+          <div>
+            <div class="step-desc-text">
+              กดปุ่ม <em>"Generate"</em> ในส่วน Audio Overview
+              ระบบจะสร้างบทสนทนา 2 คน สรุปเนื้อหาทั้ง Notebook แบบธรรมชาติ
+              ฟังขณะเดินทาง ออกกำลังกาย หรือก่อนนอนได้เลย
+            </div>
+            <div class="step-tag">ภาษาอังกฤษหลัก / ไทยบางส่วน</div>
+          </div>
+          <div class="step-mockup">
+            <div class="mk-bar">
+              <span class="mk-dot" style="background:#ff6b6b;"></span>
+              <span class="mk-dot" style="background:#ffd93d;"></span>
+              <span class="mk-dot" style="background:#6bcb77;"></span>
+              <div class="mk-url">Audio Overview</div>
+            </div>
+            <div class="mk-body">
+              <div class="mk-audio-panel">
+                <div class="mk-audio-title">🎙 Audio Overview</div>
+                <div class="mk-audio-row">
+                  <div class="mk-play"><i class="ti ti-player-play"></i></div>
+                  <div style="flex:1;">
+                    <div class="mk-waveform">
+                      <span style="height:6px;"></span><span style="height:12px;"></span><span style="height:18px;"></span><span style="height:10px;"></span><span style="height:16px;"></span><span style="height:8px;"></span><span style="height:14px;"></span><span style="height:20px;"></span><span style="height:12px;"></span><span style="height:9px;"></span><span style="height:15px;"></span><span style="height:7px;"></span><span style="height:11px;"></span><span style="height:18px;"></span><span style="height:13px;"></span>
+                    </div>
+                    <div class="mk-audio-time">0:00 / 8:42</div>
+                  </div>
+                </div>
+              </div>
+              <div class="mk-btn-outline"><i class="ti ti-refresh" style="font-size:10px;"></i> Generate new</div>
+            </div>
+          </div>
         </div>
       </div>
-      <i class="ti ti-chevron-down chevron-icon"></i>
     </div>
 
+    <!-- STEP 5 -->
     <div class="step-row" onclick="selectStep(4)">
-      <div class="step-num">5</div>
-      <div class="step-body">
-        <div class="step-title">บันทึกและสร้างเนื้อหาในส่วน Notes</div>
-        <div class="step-desc">
-          คำตอบที่ดีสามารถ "Save to note" ได้ทันที
-          บันทึกไว้เป็นชิ้นงาน ทำ Mind Map ร่างบทความ สร้างข้อสอบ
-          หรือสร้างสรุปแบบ FAQ จากเอกสารก็ได้ในไม่กี่คลิก
-          <div class="step-tag">Export เป็น Google Docs ได้</div>
+      <div class="step-header">
+        <div class="step-num">5</div>
+        <div class="step-header-body">
+          <div class="step-title">บันทึกและสร้างเนื้อหาในส่วน Notes</div>
+          <div class="step-subtitle">Save · Export ไปยัง Google Docs ได้เลย</div>
+        </div>
+        <i class="ti ti-chevron-down chevron-icon"></i>
+      </div>
+      <div class="step-content">
+        <div class="step-inner">
+          <div>
+            <div class="step-desc-text">
+              คำตอบที่ดีสามารถ <em>"Save to note"</em> ได้ทันที
+              บันทึกไว้เป็นชิ้นงาน ทำ Mind Map ร่างบทความ สร้างข้อสอบ
+              หรือสรุปแบบ FAQ จากเอกสารก็ได้ในไม่กี่คลิก
+            </div>
+            <div class="step-tag">Export เป็น Google Docs ได้</div>
+          </div>
+          <div class="step-mockup">
+            <div class="mk-bar">
+              <span class="mk-dot" style="background:#ff6b6b;"></span>
+              <span class="mk-dot" style="background:#ffd93d;"></span>
+              <span class="mk-dot" style="background:#6bcb77;"></span>
+              <div class="mk-url">Notes</div>
+            </div>
+            <div class="mk-body">
+              <div class="mk-note-card">
+                <div class="mk-note-title">📝 สรุปประเด็นสำคัญ</div>
+                <div class="mk-note-body">AI และการเปลี่ยนแปลงในโลกธุรกิจ มี 3 ด้านหลัก ได้แก่ ประสิทธิภาพ, นวัตกรรม...</div>
+              </div>
+              <div class="mk-export-row">
+                <div class="mk-export-chip"><i class="ti ti-brand-google-drive" style="font-size:9px;"></i> Export to Docs</div>
+                <div class="mk-export-chip"><i class="ti ti-copy" style="font-size:9px;"></i> Copy</div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-      <i class="ti ti-chevron-down chevron-icon"></i>
     </div>
+
   </div>
 
   <hr class="divider">
