@@ -684,6 +684,19 @@
     color: var(--text-tertiary);
     text-align: center;
   }
+
+  .side-link {
+    display: flex; align-items: center; gap: 12px;
+    margin: 0 0 2rem; padding: 12px 16px;
+    background: var(--bg-card); border: 0.5px solid var(--border-md);
+    border-radius: var(--radius-lg); color: var(--text-primary); text-decoration: none;
+  }
+  .side-link:hover { border-color: var(--green-mid); }
+  .side-link:focus-visible { outline: 2px solid var(--green-mid); outline-offset: 2px; }
+  .side-link .ti { font-size: 22px; color: var(--green-mid); }
+  .side-link div { flex: 1; }
+  .side-link strong { display: block; font-weight: 600; }
+  .side-link small { color: var(--text-secondary); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -701,6 +714,15 @@
       แต่ตอบจากไฟล์ที่คุณอัปโหลดเท่านั้น
     </p>
   </div>
+
+  <a class="side-link" href="solar-system/">
+    <i class="ti ti-planet"></i>
+    <div>
+      <strong>สำรวจระบบสุริยะ 3 มิติ</strong>
+      <small>หมุน ซูม และคลิกดูข้อมูลดวงอาทิตย์ ดาวเคราะห์ ดวงจันทร์ และดาวพลูโต</small>
+    </div>
+    <i class="ti ti-arrow-right"></i>
+  </a>
 
   <!-- BENEFITS -->
   <div class="section-label">ประโยชน์ที่ได้รับ — คลิกเพื่อดูรายละเอียด</div>
