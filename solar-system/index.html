@@ -146,6 +146,27 @@
   }
   .scale-note strong { color: var(--accent); font-weight: 600; }
 
+  /* Cross-section */
+  .xsec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 22px 0 10px; }
+  .xsec-head h3 { margin: 0; }
+  .xsec-head .btn { height: 28px; font-size: 12px; padding: 0 10px; }
+  .xsec svg { display: block; width: 100%; max-width: 320px; height: auto; margin: 0 auto 10px; }
+  .xsec svg path { transition: opacity .2s; }
+  .xsec svg.hl path:not(.on), .xsec svg.hl .badge:not(.on) { opacity: .28; }
+  .layers { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  .layers li { display: flex; gap: 10px; padding: 8px; border-radius: 8px; }
+  .layers li:hover, .layers li.on { background: rgba(148, 168, 214, 0.09); }
+  .layers .sw {
+    flex: none; width: 22px; height: 22px; margin-top: 2px; border-radius: 50%;
+    display: grid; place-items: center; background: var(--c); color: var(--sw-ink);
+    font: 600 11px var(--f-mono);
+  }
+  .layers strong { font: 600 14px var(--f-display); }
+  .layers small { margin-left: 6px; font: 11px var(--f-mono); color: var(--muted); }
+  .layers em { display: block; font: normal 12px/1.5 var(--f-mono); color: var(--accent); font-variant-numeric: tabular-nums; }
+  .layers p { margin: 2px 0 0; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+  .note { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+
   /* Dock */
   .dock {
     position: fixed; z-index: 7; left: 0; right: 0; bottom: 0;
@@ -262,6 +283,7 @@
     <button class="btn" id="btnTour" aria-pressed="false">ทัวร์<span class="txt-opt">อัตโนมัติ</span></button>
     <button class="btn" id="btnOrbits" aria-pressed="true">วงโคจร</button>
     <button class="btn" id="btnLabels" aria-pressed="true">ชื่อดาว</button>
+    <button class="btn" id="btnCut" aria-pressed="false" title="เปิด/ปิดภาพตัดขวาง (C)">ภาพตัดขวาง</button>
     <div class="clock" id="clock">เวลาจำลอง <b>+0 วัน</b></div>
   </div>
 </nav>
@@ -435,6 +457,87 @@ const BODIES = [
   }
 ];
 const BY_ID = Object.fromEntries(BODIES.map(b => [b.id, b]));
+
+// Interior layers, centre outwards. r = outer radius as a fraction of the body's radius.
+// Values follow current scientific models and are approximate, especially for the giants.
+const LAYERS = {
+  sun: [
+    { th: 'แกนกลาง', en: 'Core', r: 0.25, color: '#fff3c4', info: 'ปฏิกิริยาฟิวชันหลอมไฮโดรเจนเป็นฮีเลียมที่นี่ ร้อนราว 15 ล้าน°C และหนาแน่นกว่าตะกั่วราว 13 เท่า' },
+    { th: 'เขตแผ่รังสี', en: 'Radiative zone', r: 0.70, color: '#ffc34d', info: 'พลังงานถูกส่งต่อออกมาด้วยการแผ่รังสี โฟตอนชนอนุภาคซ้ำไปมาจนใช้เวลาหลายหมื่นถึงแสนปีกว่าจะผ่านชั้นนี้ได้' },
+    { th: 'เขตพาความร้อน', en: 'Convective zone', r: 0.9993, color: '#ff8a2a', info: 'พลาสมาร้อนลอยตัวขึ้นแล้วเย็นตัวจมลงเหมือนน้ำเดือด ทำให้ผิวดวงอาทิตย์เป็นเม็ดแกรนูลเล็กๆ ทั่วทั้งดวง' },
+    { th: 'โฟโตสเฟียร์', en: 'Photosphere', r: 1, color: '#ffd166', info: 'ชั้นผิวที่เปล่งแสงให้เรามองเห็น หนาราว 500 กม. อุณหภูมิราว 5,500°C เหนือขึ้นไปคือโครโมสเฟียร์และโคโรนา' }
+  ],
+  mercury: [
+    { th: 'แกนในแข็ง', en: 'Inner core', r: 0.41, color: '#ffe08a', info: 'เหล็กและนิกเกิลในสถานะของแข็ง' },
+    { th: 'แกนนอกหลอมเหลว', en: 'Outer core', r: 0.83, color: '#f0a040', info: 'เหล็กเหลวที่ไหลวนจนเกิดสนามแม่เหล็กอ่อนๆ แกนของดาวพุธใหญ่มากเมื่อเทียบกับขนาดดาว' },
+    { th: 'แมนเทิล', en: 'Mantle', r: 0.985, color: '#a8543a', info: 'หินซิลิเกต หนาเพียงราว 400 กม. บางที่สุดในบรรดาดาวเคราะห์หิน' },
+    { th: 'เปลือก', en: 'Crust', r: 1, color: '#8c857c', info: 'หินภูเขาไฟเก่าแก่ที่เต็มไปด้วยหลุมอุกกาบาต หนาราว 35 กม.' }
+  ],
+  venus: [
+    { th: 'แกนเหล็ก', en: 'Core', r: 0.53, color: '#f5b03f', info: 'เหล็กและนิกเกิล อาจเป็นของเหลวบางส่วน แต่ดาวศุกร์แทบไม่มีสนามแม่เหล็กเพราะหมุนช้ามาก' },
+    { th: 'แมนเทิล', en: 'Mantle', r: 0.995, color: '#b5563a', info: 'หินซิลิเกตร้อน ป้อนแมกมาให้ภูเขาไฟนับพันลูกบนพื้นผิว' },
+    { th: 'เปลือก', en: 'Crust', r: 1, color: '#c9a36b', info: 'หินบะซอลต์ หนาราว 20–50 กม. พื้นผิวส่วนใหญ่อายุน้อยเพราะลาวาไหลทับเกือบทั้งดาว' }
+  ],
+  earth: [
+    { th: 'แกนใน', en: 'Inner core', r: 0.192, color: '#fff1a8', info: 'เหล็ก-นิกเกิลแข็ง ร้อนราว 5,200°C ใกล้เคียงผิวดวงอาทิตย์ แต่คงสถานะแข็งเพราะความกดดันมหาศาล' },
+    { th: 'แกนนอก', en: 'Outer core', r: 0.546, color: '#ffa53d', info: 'เหล็กเหลวที่ไหลวนตลอดเวลา เป็นต้นกำเนิดสนามแม่เหล็กโลกที่ปกป้องเราจากลมสุริยะ' },
+    { th: 'แมนเทิลชั้นล่าง', en: 'Lower mantle', r: 0.896, color: '#d4552f', info: 'หินร้อนภายใต้ความกดสูง ไหลได้ช้ามากเพียงไม่กี่เซนติเมตรต่อปี' },
+    { th: 'แมนเทิลชั้นบน', en: 'Upper mantle', r: 0.9945, color: '#a8402a', info: 'หินร้อนที่อ่อนตัวพอจะพาแผ่นเปลือกโลกเคลื่อนที่ จนเกิดแผ่นดินไหว ภูเขาไฟ และเทือกเขา' },
+    { th: 'เปลือกโลก', en: 'Crust', r: 1, color: '#6f8a55', info: 'หนาเพียง 5–70 กม. บางมากเมื่อเทียบกับทั้งดวง เหมือนเปลือกของผลแอปเปิล' }
+  ],
+  moon: [
+    { th: 'แกนในแข็ง', en: 'Inner core', r: 0.14, color: '#fff1a8', info: 'เหล็กแข็ง รัศมีราว 240 กม.' },
+    { th: 'แกนนอกหลอมเหลว', en: 'Outer core', r: 0.2, color: '#ffa53d', info: 'เหล็กเหลวชั้นบาง' },
+    { th: 'ชั้นหลอมเหลวบางส่วน', en: 'Partial melt', r: 0.28, color: '#d86a3a', info: 'หินที่หลอมเหลวเพียงบางส่วน ตรวจพบจากคลื่นไหวสะเทือนที่ภารกิจ Apollo วางเครื่องวัดไว้' },
+    { th: 'แมนเทิล', en: 'Mantle', r: 0.975, color: '#8a6a55', info: 'หินซิลิเกตแข็ง เคยหลอมเหลวเป็นมหาสมุทรแมกมาในยุคแรกของดวงจันทร์' },
+    { th: 'เปลือก', en: 'Crust', r: 1, color: '#bdb9b2', info: 'หินอะนอร์โทไซต์สีอ่อน ด้านไกลหนากว่าด้านที่หันเข้าหาโลก' }
+  ],
+  mars: [
+    { th: 'แกนเหล็กเหลว', en: 'Core', r: 0.54, color: '#f5a33f', info: 'เหล็กเหลวผสมกำมะถัน ยาน InSight วัดขนาดได้จากคลื่นแผ่นดินไหวบนดาวอังคาร ปัจจุบันไม่สร้างสนามแม่เหล็กทั่วทั้งดาวแล้ว' },
+    { th: 'แมนเทิล', en: 'Mantle', r: 0.985, color: '#a8452c', info: 'หินซิลิเกต เคยป้อนลาวาให้ภูเขาไฟยักษ์อย่าง Olympus Mons' },
+    { th: 'เปลือก', en: 'Crust', r: 1, color: '#c96a3f', info: 'หนาเฉลี่ยราว 40–70 กม. ผิวบนเป็นฝุ่นเหล็กออกไซด์สีแดง' }
+  ],
+  jupiter: [
+    { th: 'แกนกลาง', en: 'Dilute core', r: 0.2, color: '#9c7b5c', info: 'หิน น้ำแข็ง และธาตุหนัก ข้อมูลจากยาน Juno ชี้ว่าแกนผสมกลืนกับชั้นรอบๆ จนไม่มีขอบชัดเจน' },
+    { th: 'ไฮโดรเจนโลหะ', en: 'Metallic hydrogen', r: 0.8, color: '#6f7f9c', info: 'ความกดดันสูงจนไฮโดรเจนกลายเป็นของเหลวที่นำไฟฟ้าได้เหมือนโลหะ สร้างสนามแม่เหล็กที่แรงที่สุดในบรรดาดาวเคราะห์' },
+    { th: 'ไฮโดรเจนเหลว', en: 'Liquid molecular hydrogen', r: 0.99, color: '#c9a27a', info: 'ไฮโดรเจนและฮีเลียมที่ค่อยๆ เปลี่ยนจากแก๊สเป็นของเหลวโดยไม่มีผิวแบ่งชัดเจน' },
+    { th: 'ชั้นบรรยากาศ', en: 'Atmosphere', r: 1, color: '#ecdcc0', info: 'เมฆแอมโมเนียและน้ำ เรียงตัวเป็นแถบสีและพายุ เช่น จุดแดงใหญ่' }
+  ],
+  saturn: [
+    { th: 'แกนกลาง', en: 'Dilute core', r: 0.22, color: '#9c7b5c', info: 'หินและน้ำแข็ง การสั่นของวงแหวนบ่งว่าแกนกลางแผ่กว้างและไม่มีขอบชัด' },
+    { th: 'ไฮโดรเจนโลหะ', en: 'Metallic hydrogen', r: 0.5, color: '#6f7f9c', info: 'ไฮโดรเจนสถานะโลหะนำไฟฟ้า ชั้นบางกว่าของดาวพฤหัสบดีเพราะดาวเสาร์มีมวลน้อยกว่า' },
+    { th: 'ไฮโดรเจนเหลว', en: 'Liquid molecular hydrogen', r: 0.99, color: '#d8b884', info: 'ไฮโดรเจนและฮีเลียมเหลว เชื่อว่ามีฝนฮีเลียมตกลงไปด้านล่าง' },
+    { th: 'ชั้นบรรยากาศ', en: 'Atmosphere', r: 1, color: '#f0dcae', info: 'เมฆแอมโมเนียสีเหลืองอ่อน ลมพัดเร็วได้ถึงราว 1,800 กม./ชม.' }
+  ],
+  uranus: [
+    { th: 'แกนหิน', en: 'Rocky core', r: 0.2, color: '#8f7458', info: 'หินซิลิเกตและเหล็ก มีขนาดเล็กกว่าโลก' },
+    { th: 'แมนเทิลน้ำแข็ง', en: 'Icy mantle', r: 0.75, color: '#3e9fb0', info: 'ของไหลร้อนหนาแน่นของน้ำ แอมโมเนีย และมีเทน นักดาราศาสตร์เรียกว่าน้ำแข็ง แม้ร้อนหลายพันองศา' },
+    { th: 'ชั้นแก๊ส', en: 'Gas envelope', r: 1, color: '#a8e4ea', info: 'ไฮโดรเจน ฮีเลียม และมีเทน ซึ่งดูดกลืนแสงสีแดงจนดาวเป็นสีฟ้าอมเขียว' }
+  ],
+  neptune: [
+    { th: 'แกนหิน', en: 'Rocky core', r: 0.25, color: '#8f7458', info: 'หินซิลิเกตและเหล็ก มวลราว 1 เท่าของโลก' },
+    { th: 'แมนเทิลน้ำแข็ง', en: 'Icy mantle', r: 0.8, color: '#2f63b8', info: 'น้ำ แอมโมเนีย และมีเทนร้อนภายใต้ความกดสูง นักวิทยาศาสตร์คาดว่าอาจมีฝนเพชรตกลงไปในชั้นนี้' },
+    { th: 'ชั้นแก๊ส', en: 'Gas envelope', r: 1, color: '#6d9cf0', info: 'ไฮโดรเจน ฮีเลียม และมีเทน พัดด้วยลมที่แรงที่สุดในระบบสุริยะ' }
+  ],
+  pluto: [
+    { th: 'แกนหิน', en: 'Rocky core', r: 0.72, color: '#8a6d52', info: 'หินซิลิเกต รัศมีราว 850 กม. คิดเป็นมวลส่วนใหญ่ของดาว' },
+    { th: 'มหาสมุทรใต้ผิว', en: 'Subsurface ocean', r: 0.85, color: '#3f7fb0', info: 'อาจมีน้ำเหลวซ่อนอยู่ใต้เปลือกน้ำแข็ง หลักฐานมาจากรูปทรงของที่ราบรูปหัวใจ แต่ยังเป็นสมมติฐาน' },
+    { th: 'เปลือกน้ำแข็ง', en: 'Ice shell', r: 1, color: '#e6ddcf', info: 'น้ำแข็งเป็นหลัก ผิวบนปกคลุมด้วยน้ำแข็งไนโตรเจน มีเทน และคาร์บอนมอนอกไซด์' }
+  ]
+};
+
+// Very thin layers get a minimum drawn thickness so they stay visible.
+function displayRadii(layers) {
+  const MIN = 0.035, out = [];
+  let prev = 0, adjusted = false;
+  for (const l of layers) {
+    const r = Math.max(l.r, prev + MIN);
+    if (r !== l.r) adjusted = true;
+    out.push(r); prev = r;
+  }
+  const k = 1 / out[out.length - 1];
+  return { radii: out.map(r => r * k), adjusted };
+}
 
 /* ------------------------------------------------------------------ */
 /* Procedural textures                                                 */
@@ -805,6 +908,7 @@ for (const b of BODIES) {
     }));
     atmo.scale.setScalar(b.radius * 1.045);
     tiltG.add(atmo);
+    b.atmoMesh = atmo;
   }
   if (b.ring) tiltG.add(ringMesh(b.ring, b.radius));
 
@@ -815,12 +919,92 @@ for (const b of BODIES) {
     const g2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.35 }));
     g2.scale.setScalar(b.radius * 14);
     carrier.add(g1, g2);
+    b.glows = [g1, g2];
   }
 
   Object.assign(b, { mesh, tiltG, carrier, orbitG, angle: startAngles[b.id] || 0 });
 }
 
 function worldPos(b, out = new THREE.Vector3()) { return b.mesh.getWorldPosition(out); }
+
+/* ------------------------------------------------------------------ */
+/* Cross-section: one octant removed, layers painted on the three cut faces */
+/* ------------------------------------------------------------------ */
+const WEDGE_ANGLE = Math.PI * 0.75; // direction of the missing quarter in the model's own frame
+function buildCutaway(b) {
+  const L = LAYERS[b.id], { radii } = displayRadii(L);
+  const g = new THREE.Group();
+  // Upper hemisphere with a quarter missing, plus the whole lower hemisphere.
+  // UVs are remapped so the surface texture lines up with the uncut planet.
+  const top = new THREE.SphereGeometry(1, 64, 16, 0, Math.PI * 1.5, 0, Math.PI / 2);
+  const bottom = new THREE.SphereGeometry(1, 64, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2);
+  const tuv = top.attributes.uv, buv = bottom.attributes.uv;
+  for (let i = 0; i < tuv.count; i++) tuv.setXY(i, tuv.getX(i) * 0.75, 0.5 + tuv.getY(i) * 0.5);
+  for (let i = 0; i < buv.count; i++) buv.setY(i, buv.getY(i) * 0.5);
+  g.add(new THREE.Mesh(top, b.mesh.material), new THREE.Mesh(bottom, b.mesh.material));
+  const mats = L.map((l, i) => {
+    const mat = b.type === 'star'
+      ? new THREE.MeshBasicMaterial({ color: l.color, side: THREE.DoubleSide })
+      : new THREE.MeshStandardMaterial({ color: l.color, emissive: l.color, emissiveIntensity: 0.45, roughness: 0.9, side: THREE.DoubleSide });
+    const r0 = i ? radii[i - 1] : 0.0001, r1 = radii[i];
+    for (const phi of [0, Math.PI * 1.5]) {
+      // vertical quarter-disc on each side of the missing wedge
+      const face = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 32, 1, 0, Math.PI / 2), mat);
+      face.rotation.y = Math.PI + phi;
+      g.add(face);
+    }
+    // horizontal quarter-disc on the equator, under the missing wedge
+    const floor = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 32, 1, Math.PI / 2, Math.PI / 2), mat);
+    floor.rotation.x = -Math.PI / 2;
+    g.add(floor);
+    return mat;
+  });
+  g.scale.setScalar(b.radius);
+  g.visible = false;
+  b.carrier.add(g);
+  b.cut = { group: g, mats };
+}
+
+// Turn the open wedge toward the camera so both cut faces stay in view.
+const camLocal = new THREE.Vector3();
+function faceCamera(b, k) {
+  camLocal.copy(camera.position);
+  b.carrier.worldToLocal(camLocal);
+  const target = Math.atan2(-camLocal.z, camLocal.x) - WEDGE_ANGLE;
+  const g = b.cut.group;
+  g.rotation.y += angDiff(target, g.rotation.y) * k;
+}
+
+function showCut(b, on) {
+  if (on && !b.cut) buildCutaway(b);
+  if (!b.cut) return;
+  b.cut.group.visible = on;
+  b.mesh.visible = !on;
+  if (b.atmoMesh) b.atmoMesh.visible = !on;
+  if (b.clouds) b.clouds.visible = !on;
+  if (b.glows) b.glows.forEach(s => { s.visible = !on; });
+  if (on) faceCamera(b, 1);
+}
+
+let cutMode = false, cutBody = null;
+function applyCut() {
+  const want = cutMode && focus ? focus : null;
+  if (cutBody && cutBody !== want) showCut(cutBody, false);
+  if (want && want !== cutBody) showCut(want, true);
+  cutBody = want;
+  document.getElementById('btnCut').setAttribute('aria-pressed', String(cutMode));
+  const inPanel = document.getElementById('btnCutPanel');
+  if (inPanel) {
+    inPanel.setAttribute('aria-pressed', String(cutMode));
+    inPanel.textContent = cutMode ? 'ปิดภาพตัดขวาง 3D' : 'ผ่าดูแบบ 3D';
+  }
+}
+function highlightLayer(i) {
+  if (!cutBody || !cutBody.cut) return;
+  cutBody.cut.mats.forEach((m, j) => {
+    if (m.emissiveIntensity !== undefined) m.emissiveIntensity = i === j ? 1.2 : 0.45;
+  });
+}
 
 /* ------------------------------------------------------------------ */
 /* Textures, painted progressively so the scene is usable right away   */
@@ -840,6 +1024,7 @@ const loader = document.getElementById('loader');
       clouds.scale.setScalar(earth.radius * 1.015);
       earth.tiltG.add(clouds);
       earth.clouds = clouds;
+      clouds.visible = cutBody !== earth;
     } else {
       const m = job.b.mesh.material;
       m.map = makeTexture(PAINT[job.key], job.w);
@@ -1028,6 +1213,69 @@ function compareText(b) {
   return `<b>ราว ${Math.round(r * 100)}% ของโลก</b>เทียบจากเส้นผ่านศูนย์กลาง (โลก = วงสีฟ้า)`;
 }
 
+function roundKm(x) {
+  if (x < 100) return Math.round(x);
+  if (x < 2000) return Math.round(x / 10) * 10;
+  return Math.round(x / 100) * 100;
+}
+function inkFor(hex) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, bl = n & 255;
+  return (0.299 * r + 0.587 * g + 0.114 * bl) > 150 ? '#0a0f1c' : '#ffffff';
+}
+function xsecHTML(b) {
+  const L = LAYERS[b.id];
+  if (!L) return '';
+  const { radii, adjusted } = displayRadii(L);
+  const R = b.diameter / 2, cx = 160, cy = 150, S = 140;
+  // semicircles drawn outer to inner so inner layers sit on top
+  let paths = '', badges = '';
+  for (let i = L.length - 1; i >= 0; i--) {
+    const r = radii[i] * S;
+    paths += `<path data-i="${i}" d="M${cx - r} ${cy}A${r} ${r} 0 0 1 ${cx + r} ${cy}Z" fill="${L[i].color}"/>`;
+  }
+  const n = L.length;
+  L.forEach((l, i) => {
+    const inner = i ? radii[i - 1] * S : 0, outer = radii[i] * S;
+    if (outer - inner < 14) return;
+    const m = (inner + outer) / 2, a = -Math.PI / 2 + (i - (n - 1) / 2) * 0.32;
+    const x = cx + m * Math.cos(a), y = cy + m * Math.sin(a);
+    badges += `<g class="badge" data-i="${i}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="8.5" fill="rgba(4,6,12,.72)"/><text x="${x.toFixed(1)}" y="${(y + 3.6).toFixed(1)}" fill="#fff" font-size="10" font-family="IBM Plex Mono, monospace" text-anchor="middle">${n - i}</text></g>`;
+  });
+  const items = L.map((l, i) => {
+    const top = (1 - l.r) * R, bottom = (1 - (i ? L[i - 1].r : 0)) * R;
+    const where = i === 0 ? `ใจกลาง · รัศมี ${fmt(roundKm(l.r * R))} กม.` : `ลึก ${fmt(roundKm(top))}–${fmt(roundKm(bottom))} กม.`;
+    return `<li data-i="${i}"><span class="sw" style="--c:${l.color};--sw-ink:${inkFor(l.color)}">${n - i}</span>
+      <div><strong>${l.th}</strong><small>${l.en}</small><em>${where}</em><p>${l.info}</p></div></li>`;
+  }).reverse().join('');
+  return `
+    <div class="xsec-head"><h3>โครงสร้างภายใน</h3>
+      <button class="btn" id="btnCutPanel" aria-pressed="${cutMode}">${cutMode ? 'ปิดภาพตัดขวาง 3D' : 'ผ่าดูแบบ 3D'}</button></div>
+    <div class="xsec">
+      <svg viewBox="0 0 320 158" role="img" aria-label="ภาพตัดขวางของ${b.th} แสดง ${n} ชั้น">
+        ${paths}${badges}
+        <line x1="10" x2="310" y1="${cy + 0.5}" y2="${cy + 0.5}" stroke="#8e98b2" stroke-opacity=".4"/>
+      </svg>
+      <ol class="layers">${items}</ol>
+      <p class="note">ไล่จากผิวลงไปถึงใจกลาง ความลึกเป็นค่าประมาณจากแบบจำลองทางวิทยาศาสตร์${adjusted ? ' ชั้นที่บางมากถูกวาดให้หนาขึ้นเพื่อให้มองเห็นได้' : ''}</p>
+    </div>`;
+}
+function wireXsec() {
+  const svg = pBody.querySelector('.xsec svg');
+  const btn = document.getElementById('btnCutPanel');
+  if (btn) btn.addEventListener('click', () => setCutMode(!cutMode));
+  if (!svg) return;
+  const set = i => {
+    svg.classList.toggle('hl', i !== null);
+    svg.querySelectorAll('[data-i]').forEach(el => el.classList.toggle('on', +el.dataset.i === i));
+    pBody.querySelectorAll('.layers li').forEach(el => el.classList.toggle('on', +el.dataset.i === i));
+    highlightLayer(i);
+  };
+  pBody.querySelectorAll('.layers li, .xsec [data-i]').forEach(el => {
+    el.addEventListener('mouseenter', () => set(+el.dataset.i));
+    el.addEventListener('mouseleave', () => set(null));
+  });
+}
+
 function renderBody(b) {
   pEyebrow.innerHTML = `<span>${TYPE_TH[b.type]}</span><span class="ord">${b.order}</span>`;
   pName.textContent = b.th;
@@ -1055,10 +1303,12 @@ function renderBody(b) {
   pBody.innerHTML = `
     <p class="desc">${b.desc}</p>
     <dl class="stats">${rows.map((r, i) => `<div class="stat ${cls[i]}"><dt>${r[0]}</dt><dd>${r[1]}</dd></div>`).join('')}</dl>
+    ${xsecHTML(b)}
     <h3>ขนาดเทียบกับโลก</h3>
     <div class="compare">${compareSVG(b)}<p>${compareText(b)}</p></div>
     <h3>รู้หรือไม่</h3>
     <ul class="facts">${b.facts.map(f => `<li>${f}</li>`).join('')}</ul>`;
+  wireXsec();
   pBody.scrollTop = 0;
 }
 
@@ -1087,6 +1337,7 @@ function renderOverview() {
       <li><kbd>ล้อเมาส์</kbd>หรือถ่างนิ้ว เพื่อซูมเข้าออก</li>
       <li><kbd>คลิก</kbd>ที่ดาวหรือชื่อดาวเพื่อดูข้อมูล</li>
       <li><kbd>←</kbd><kbd>→</kbd>เปลี่ยนไปดวงก่อนหน้าหรือถัดไป</li>
+      <li><kbd>C</kbd>ผ่าดูภาพตัดขวางของดาวที่เลือกอยู่</li>
       <li><kbd>Space</kbd>หยุดหรือเล่นการโคจร · <kbd>Esc</kbd>กลับภาพรวม</li>
     </ul>`;
   pBody.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => select(BY_ID[el.dataset.go])));
@@ -1115,6 +1366,7 @@ function select(b, opts = {}) {
   BODIES.forEach(x => x.chip.setAttribute('aria-current', String(x === b)));
   if (b) { renderBody(b); focusOn(b); b.chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: REDUCED ? 'auto' : 'smooth' }); }
   else { renderOverview(); goOverview(); }
+  applyCut();
   setCollapsed(false);
 }
 function step(dir) {
@@ -1167,6 +1419,13 @@ function toggleBtn(id, init, onChange) {
 toggleBtn('btnOrbits', true, v => orbitLines.forEach(l => { l.visible = v; }));
 toggleBtn('btnLabels', true, v => { showLabels = v; });
 
+function setCutMode(v) {
+  cutMode = v;
+  if (cutMode && !focus) { select(BY_ID.earth); return; }
+  applyCut();
+}
+document.getElementById('btnCut').addEventListener('click', () => setCutMode(!cutMode));
+
 let tourTimer = null;
 const btnTour = document.getElementById('btnTour');
 function stopTour() {
@@ -1187,6 +1446,7 @@ window.addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { step(1); e.preventDefault(); }
   else if (e.key === 'ArrowLeft') { step(-1); e.preventDefault(); }
   else if (e.key === 'Escape') select(null);
+  else if (e.key === 'c' || e.key === 'C') setCutMode(!cutMode);
   else if (e.key === ' ' && !(e.target.closest && e.target.closest('button'))) { setPaused(!paused); e.preventDefault(); }
 });
 
@@ -1230,10 +1490,7 @@ const clockEl = document.getElementById('clock');
 let simDays = 0, clockAcc = 0;
 const timer = new THREE.Clock();
 
-function tick() {
-  const dt = Math.min(timer.getDelta(), 0.1);
-  const sim = paused ? 0 : speed;
-
+function placeBodies(dt, sim) {
   for (const b of BODIES) {
     if (b.dist > 0) {
       b.angle += dt * sim * ORBIT_K / b.period;
@@ -1242,6 +1499,13 @@ function tick() {
     if (b.locked) b.mesh.rotation.y = b.angle + Math.PI;
     else b.mesh.rotation.y += dt * sim * SPIN_K / b.rot;
   }
+}
+
+function tick() {
+  const dt = Math.min(timer.getDelta(), 0.1);
+  const sim = paused ? 0 : speed;
+
+  placeBodies(dt, sim);
   const earth = BY_ID.earth;
   if (earth.clouds) earth.clouds.rotation.y += dt * sim * SPIN_K / earth.rot * 1.15;
   belt.rotation.y += dt * sim * ORBIT_K / 1680;
@@ -1255,6 +1519,7 @@ function tick() {
   }
 
   updateCamera(dt);
+  if (cutBody) faceCamera(cutBody, Math.min(1, dt * 5));
   controls.update();
   updateLabels();
   renderer.render(scene, camera);
@@ -1265,6 +1530,7 @@ function tick() {
 /* Start                                                               */
 /* ------------------------------------------------------------------ */
 resize();
+placeBodies(0, 0);
 const home = homeView();
 camera.position.copy(home.pos).multiplyScalar(REDUCED ? 1 : 1.9).add(new THREE.Vector3(-120, 60, 0));
 controls.target.set(0, 0, 0);
