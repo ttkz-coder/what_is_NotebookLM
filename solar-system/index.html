@@ -167,6 +167,27 @@
   .layers p { margin: 2px 0 0; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
   .note { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
 
+  /* Narration captions */
+  .caption {
+    position: fixed; z-index: 6; left: 16px; right: 412px;
+    bottom: calc(var(--dock-h) + 14px);
+    display: flex; justify-content: center; pointer-events: none;
+  }
+  .caption-box {
+    max-width: 620px; padding: 10px 16px 12px; border-radius: 12px;
+    background: var(--panel); border: 1px solid var(--line);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .cap-who { display: flex; align-items: center; gap: 8px; font: 600 11px/1.4 var(--f-display); letter-spacing: .1em; color: var(--accent); }
+  .cap-who .bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 10px; }
+  .cap-who .bars i { width: 2px; background: var(--accent); border-radius: 1px; animation: eq 0.9s ease-in-out infinite; }
+  .cap-who .bars i:nth-child(1) { height: 5px; }
+  .cap-who .bars i:nth-child(2) { height: 10px; animation-delay: -.3s; }
+  .cap-who .bars i:nth-child(3) { height: 7px; animation-delay: -.6s; }
+  @keyframes eq { 50% { transform: scaleY(.35); } }
+  .caption p { margin: 4px 0 0; font-size: 15px; line-height: 1.6; color: var(--ink); }
+  .caption small { display: block; margin-top: 4px; font-size: 11px; color: var(--muted); }
+
   /* Dock */
   .dock {
     position: fixed; z-index: 7; left: 0; right: 0; bottom: 0;
@@ -228,9 +249,12 @@
     .clock { margin-left: 0; width: 100%; }
     #speed { width: 90px; }
     .btn .txt-opt { display: none; }
+    .caption { right: 16px; bottom: auto; top: calc(62px + env(safe-area-inset-top, 0px)); }
+    .caption p { font-size: 14px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .loader { transition: none; }
+    .cap-who .bars i { animation: none; }
   }
 </style>
 </head>
@@ -254,6 +278,9 @@
       <div class="en" id="pEn"></div>
     </div>
     <div class="head-btns">
+      <button class="icon-btn" id="btnSpeak" aria-pressed="false" aria-label="ฟังคำบรรยาย" title="ฟังคำบรรยายภาษาไทย">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6v4h2.5l3.5 3V3L5 6z" fill="currentColor"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.5a6 6 0 0 1 0 9"/></svg>
+      </button>
       <button class="icon-btn" id="btnPrev" aria-label="ดวงก่อนหน้า" title="ดวงก่อนหน้า (←)">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 3 5 8l5 5"/></svg>
       </button>
@@ -267,6 +294,14 @@
   </div>
   <div class="panel-scroll" id="pBody"></div>
 </aside>
+
+<div class="caption" id="caption" hidden aria-live="polite">
+  <div class="caption-box">
+    <div class="cap-who"><span class="bars" id="capBars" aria-hidden="true"><i></i><i></i><i></i></span><span id="capWho"></span></div>
+    <p id="capText"></p>
+    <small id="capNote" hidden>อุปกรณ์นี้ไม่มีเสียงอ่านภาษาไทย จึงแสดงเป็นคำบรรยายแทน</small>
+  </div>
+</div>
 
 <nav class="dock" id="dock" aria-label="เลือกดาวและควบคุมการจำลอง">
   <div class="chips" id="chips"></div>
@@ -284,6 +319,9 @@
     <button class="btn" id="btnOrbits" aria-pressed="true">วงโคจร</button>
     <button class="btn" id="btnLabels" aria-pressed="true">ชื่อดาว</button>
     <button class="btn" id="btnCut" aria-pressed="false" title="เปิด/ปิดภาพตัดขวาง (C)">ภาพตัดขวาง</button>
+    <button class="btn" id="btnSound" aria-pressed="true" title="เปิด/ปิดเสียง (M)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" id="icoSound"><path d="M2.5 6v4h2.5l3.5 3V3L5 6z" fill="currentColor"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.5a6 6 0 0 1 0 9"/></svg>
+      เสียง</button>
     <div class="clock" id="clock">เวลาจำลอง <b>+0 วัน</b></div>
   </div>
 </nav>
@@ -991,6 +1029,8 @@ function applyCut() {
   const want = cutMode && focus ? focus : null;
   if (cutBody && cutBody !== want) showCut(cutBody, false);
   if (want && want !== cutBody) showCut(want, true);
+  if (want && !cutBody) Sound.cutOpen();
+  else if (!want && cutBody) Sound.cutClose();
   cutBody = want;
   document.getElementById('btnCut').setAttribute('aria-pressed', String(cutMode));
   const inPanel = document.getElementById('btnCutPanel');
@@ -1055,6 +1095,7 @@ function homeView() {
 }
 
 function flyTo(getEnd, dur = 1.6) {
+  Sound.whoosh(REDUCED ? 0 : dur);
   trans = { t: 0, dur: REDUCED ? 0.01 : dur, fromPos: camera.position.clone(), fromTarget: controls.target.clone(), getEnd };
   controls.enabled = false;
 }
@@ -1338,6 +1379,7 @@ function renderOverview() {
       <li><kbd>คลิก</kbd>ที่ดาวหรือชื่อดาวเพื่อดูข้อมูล</li>
       <li><kbd>←</kbd><kbd>→</kbd>เปลี่ยนไปดวงก่อนหน้าหรือถัดไป</li>
       <li><kbd>C</kbd>ผ่าดูภาพตัดขวางของดาวที่เลือกอยู่</li>
+      <li><kbd>M</kbd>เปิดหรือปิดเสียง · ปุ่ม <kbd>ทัวร์</kbd>พาชมทุกดวงพร้อมเสียงบรรยายภาษาไทย</li>
       <li><kbd>Space</kbd>หยุดหรือเล่นการโคจร · <kbd>Esc</kbd>กลับภาพรวม</li>
     </ul>`;
   pBody.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => select(BY_ID[el.dataset.go])));
@@ -1359,10 +1401,225 @@ for (const b of BODIES) {
   b.chip = c;
 }
 
+/* ------------------------------------------------------------------ */
+/* Sound: synthesized with Web Audio, no files                         */
+/* ------------------------------------------------------------------ */
+const Sound = {
+  on: true, ctx: null, master: null, noise: null,
+  init() {
+    if (this.ctx) { if (this.on && this.ctx.state === 'suspended') this.ctx.resume(); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = this.ctx = new AC();
+    this.master = ctx.createGain();
+    this.master.gain.value = this.on ? 0.8 : 0;
+    this.master.connect(ctx.destination);
+    const len = ctx.sampleRate * 2, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    this.noise = buf;
+    this.ambient();
+  },
+  setOn(v) {
+    this.on = v;
+    if (!this.ctx) return;
+    if (v && this.ctx.state === 'suspended') this.ctx.resume();
+    this.master.gain.setTargetAtTime(v ? 0.8 : 0, this.ctx.currentTime, 0.15);
+  },
+  ready() { return this.ctx && this.on && this.ctx.state === 'running'; },
+  // Low drone with a slowly breathing filter, plus a faint wash of noise.
+  ambient() {
+    const ctx = this.ctx, t = ctx.currentTime;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.07, t + 5);
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 340; lp.Q.value = 3;
+    [55, 82.4, 110.2].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      o.type = i === 1 ? 'triangle' : 'sine';
+      o.frequency.value = f; o.detune.value = (i - 1) * 7;
+      o.connect(lp); o.start();
+    });
+    const lfo = ctx.createOscillator(), lg = ctx.createGain();
+    lfo.frequency.value = 0.06; lg.gain.value = 200;
+    lfo.connect(lg).connect(lp.frequency); lfo.start();
+    const n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), ng = ctx.createGain();
+    n.buffer = this.noise; n.loop = true;
+    bp.type = 'bandpass'; bp.frequency.value = 700; bp.Q.value = 0.6; ng.gain.value = 0.035;
+    n.connect(bp).connect(ng).connect(g); n.start();
+    lp.connect(g); g.connect(this.master);
+    this.ambGain = g;
+  },
+  duck(v) { if (this.ambGain) this.ambGain.gain.setTargetAtTime(v ? 0.025 : 0.07, this.ctx.currentTime, 0.4); },
+  tone(freq, { type = 'sine', dur = 0.3, gain = 0.15, to = 0, delay = 0 } = {}) {
+    const ctx = this.ctx, t = ctx.currentTime + delay;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(this.master);
+    o.start(t); o.stop(t + dur + 0.05);
+  },
+  sweep({ dur, from, mid, to, peak = 0.12, type = 'bandpass', q = 1.2 }) {
+    const ctx = this.ctx, t = ctx.currentTime;
+    const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = this.noise;
+    f.type = type; f.Q.value = q;
+    f.frequency.setValueAtTime(from, t);
+    f.frequency.exponentialRampToValueAtTime(mid, t + dur * 0.5);
+    f.frequency.exponentialRampToValueAtTime(to, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(peak, t + dur * 0.45);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(f).connect(g).connect(this.master);
+    src.start(t); src.stop(t + dur + 0.05);
+  },
+  // Each body gets its own note on a pentatonic scale, Sun lowest, Pluto highest.
+  select(i) {
+    if (!this.ready()) return;
+    const steps = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21, 24];
+    const f = 261.63 * Math.pow(2, steps[Math.max(0, i) % steps.length] / 12);
+    this.tone(f, { dur: 0.7, gain: 0.11 });
+    this.tone(f * 2, { dur: 0.5, gain: 0.035, type: 'triangle', delay: 0.05 });
+  },
+  whoosh(dur) { if (this.ready() && dur > 0.2) this.sweep({ dur: dur * 0.9, from: 220, mid: 1600, to: 260, peak: 0.09 }); },
+  cutOpen() {
+    if (!this.ready()) return;
+    this.sweep({ dur: 0.35, from: 5000, mid: 2500, to: 900, peak: 0.08, type: 'highpass', q: 0.7 });
+    this.tone(190, { to: 48, dur: 0.55, gain: 0.3 });
+  },
+  cutClose() {
+    if (!this.ready()) return;
+    this.tone(60, { to: 170, dur: 0.3, gain: 0.18 });
+    this.sweep({ dur: 0.25, from: 900, mid: 2200, to: 4000, peak: 0.05, type: 'highpass', q: 0.7 });
+  },
+  tick() { if (this.ready()) this.tone(1500, { type: 'square', dur: 0.045, gain: 0.025 }); },
+  chime() {
+    if (!this.ready()) return;
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, { dur: 1.1, gain: 0.07, delay: i * 0.13 }));
+  }
+};
+// Browsers only allow audio after the viewer interacts, so start it on the first gesture.
+['pointerdown', 'keydown'].forEach(ev => window.addEventListener(ev, () => Sound.init(), { capture: true }));
+document.addEventListener('visibilitychange', () => {
+  if (!Sound.ctx) return;
+  if (document.hidden) Sound.ctx.suspend(); else if (Sound.on) Sound.ctx.resume();
+});
+
+/* ------------------------------------------------------------------ */
+/* Thai narration: speech synthesis with on-screen captions            */
+/* ------------------------------------------------------------------ */
+function speakable(text) {
+  let t = text
+    .replace(/°C/g, ' องศาเซลเซียส')
+    .replace(/[−-](?=\d)/g, 'ลบ ')
+    .replace(/~/g, 'ประมาณ ')
+    .replace(/กม\.\/ชม\./g, 'กิโลเมตรต่อชั่วโมง')
+    .replace(/ม\.\/วินาที²/g, 'เมตรต่อวินาทีกำลังสอง')
+    .replace(/กม\./g, 'กิโลเมตร')
+    .replace(/ซม\./g, 'เซนติเมตร')
+    .replace(/ชม\./g, 'ชั่วโมง')
+    .replace(/(\d+(?:\.\d+)?)%/g, '$1 เปอร์เซ็นต์')
+    .replace(/[()·]/g, ' ');
+  while (/\d,\d{3}/.test(t)) t = t.replace(/(\d),(\d{3})/g, '$1$2');
+  return t.replace(/\s+/g, ' ').trim();
+}
+// Short chunks keep some browsers from cutting long utterances off.
+function chunkText(text, max = 140) {
+  const words = text.split(' '), out = [];
+  let cur = '';
+  for (const w of words) {
+    if (cur && (cur + ' ' + w).length > max) { out.push(cur); cur = w; }
+    else cur = cur ? cur + ' ' + w : w;
+  }
+  if (cur) out.push(cur);
+  return out;
+}
+
+const caption = document.getElementById('caption');
+const capWho = document.getElementById('capWho');
+const capText = document.getElementById('capText');
+const capNote = document.getElementById('capNote');
+const btnSpeak = document.getElementById('btnSpeak');
+const Narrator = {
+  run: 0, voice: null, speaking: false,
+  hasSpeech: 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window,
+  pickVoice() {
+    if (!this.hasSpeech) return null;
+    const vs = speechSynthesis.getVoices();
+    this.voice = vs.find(v => /^th([-_]|$)/i.test(v.lang)) || null;
+    return this.voice;
+  },
+  speak(who, text, onDone) {
+    this.cancel();
+    const run = ++this.run;
+    const chunks = chunkText(text);
+    const spoken = chunkText(speakable(text));
+    const useVoice = Sound.on && this.pickVoice();
+    this.speaking = true;
+    btnSpeak.setAttribute('aria-pressed', 'true');
+    capWho.textContent = who;
+    capNote.hidden = !(Sound.on && !useVoice);
+    caption.hidden = false;
+    Sound.duck(true);
+    const finish = () => {
+      if (run !== this.run) return;
+      this.stopUI();
+      if (onDone) onDone();
+    };
+    let i = 0;
+    const next = () => {
+      if (run !== this.run) return;
+      if (i >= chunks.length) { finish(); return; }
+      const shown = chunks[i], said = spoken[i] || shown;
+      i++;
+      capText.textContent = shown;
+      if (useVoice && Sound.on) {
+        const u = new SpeechSynthesisUtterance(said);
+        u.lang = 'th-TH'; u.voice = this.voice; u.rate = 1; u.pitch = 1;
+        let done = false;
+        const go = () => { if (!done) { done = true; clearTimeout(safety); next(); } };
+        // onend is not always fired, so fall back to an estimate of the reading time
+        const safety = setTimeout(go, said.length * 140 + 4000);
+        u.onend = go; u.onerror = go;
+        speechSynthesis.speak(u);
+      } else {
+        setTimeout(next, Math.max(2600, shown.length * 85));
+      }
+    };
+    next();
+  },
+  stopUI() {
+    this.speaking = false;
+    btnSpeak.setAttribute('aria-pressed', 'false');
+    caption.hidden = true;
+    Sound.duck(false);
+  },
+  cancel() {
+    this.run++;
+    if (this.hasSpeech) speechSynthesis.cancel();
+    if (this.speaking) this.stopUI();
+  }
+};
+if (Narrator.hasSpeech) {
+  Narrator.pickVoice();
+  speechSynthesis.addEventListener?.('voiceschanged', () => Narrator.pickVoice());
+}
+
+const OVERVIEW_TALK = 'ระบบสุริยะของเราก่อตัวขึ้นเมื่อราว 4,600 ล้านปีก่อน ประกอบด้วยดวงอาทิตย์ ดาวเคราะห์ 8 ดวง ดาวเคราะห์แคระ ดวงจันทร์หลายร้อยดวง ดาวเคราะห์น้อย และดาวหาง ดาวเคราะห์ชั้นในเป็นดาวเคราะห์หิน ส่วนชั้นนอกเป็นดาวเคราะห์ก๊าซยักษ์และน้ำแข็งยักษ์';
+function narrationFor(b) {
+  if (!b) return OVERVIEW_TALK;
+  return `${b.th} ${b.desc} รู้หรือไม่ ${b.facts[0]}`;
+}
+
 let current = -1; // index into BODIES, -1 = overview
 function select(b, opts = {}) {
-  if (!opts.fromTour) stopTour();
+  if (!opts.fromTour) { stopTour(); Narrator.cancel(); }
   current = b ? BODIES.indexOf(b) : -1;
+  Sound.select(current === -1 ? 0 : current);
   BODIES.forEach(x => x.chip.setAttribute('aria-current', String(x === b)));
   if (b) { renderBody(b); focusOn(b); b.chip.scrollIntoView({ block: 'nearest', inline: 'center', behavior: REDUCED ? 'auto' : 'smooth' }); }
   else { renderOverview(); goOverview(); }
@@ -1396,7 +1653,7 @@ function setPaused(v) {
     ? '<path d="M4.5 2.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L5.7 2.1a.8.8 0 0 0-1.2.7z"/>'
     : '<rect x="3.5" y="3" width="3" height="10" rx="1"/><rect x="9.5" y="3" width="3" height="10" rx="1"/>';
 }
-btnPlay.addEventListener('click', () => setPaused(!paused));
+btnPlay.addEventListener('click', () => { Sound.tick(); setPaused(!paused); });
 
 const SPEEDS = [0.1, 0.25, 0.5, 1, 2, 5, 10, 30];
 const speedIn = document.getElementById('speed'), speedOut = document.getElementById('speedOut');
@@ -1414,7 +1671,7 @@ applySpeed();
 function toggleBtn(id, init, onChange) {
   const el = document.getElementById(id);
   let v = init;
-  el.addEventListener('click', () => { v = !v; el.setAttribute('aria-pressed', String(v)); onChange(v); });
+  el.addEventListener('click', () => { v = !v; el.setAttribute('aria-pressed', String(v)); Sound.tick(); onChange(v); });
 }
 toggleBtn('btnOrbits', true, v => orbitLines.forEach(l => { l.visible = v; }));
 toggleBtn('btnLabels', true, v => { showLabels = v; });
@@ -1426,20 +1683,63 @@ function setCutMode(v) {
 }
 document.getElementById('btnCut').addEventListener('click', () => setCutMode(!cutMode));
 
-let tourTimer = null;
+// Guided tour: fly to each body in turn and narrate it; move on when the narration ends.
+let touring = false, tourTimer = null;
 const btnTour = document.getElementById('btnTour');
 function stopTour() {
-  if (!tourTimer) return;
-  clearInterval(tourTimer); tourTimer = null;
+  if (!touring) return;
+  touring = false;
+  clearTimeout(tourTimer);
+  Narrator.cancel();
   btnTour.setAttribute('aria-pressed', 'false');
 }
+function tourStep() {
+  if (!touring) return;
+  if (current === BODIES.length - 1) {
+    select(null, { fromTour: true });
+    Narrator.speak('จบการทัวร์', 'จบการทัวร์ระบบสุริยะแล้ว ลองคลิกดาวที่สนใจ หรือกดปุ่มภาพตัดขวางเพื่อผ่าดูข้างในได้เลย', () => stopTour());
+    return;
+  }
+  const b = BODIES[current + 1];
+  select(b, { fromTour: true });
+  tourTimer = setTimeout(() => {
+    Narrator.speak(`กำลังบรรยาย · ${b.th}`, narrationFor(b), () => {
+      if (touring) tourTimer = setTimeout(tourStep, 1200);
+    });
+  }, REDUCED ? 300 : 1800);
+}
 btnTour.addEventListener('click', () => {
-  if (tourTimer) { stopTour(); return; }
+  if (touring) { stopTour(); Sound.tick(); return; }
+  Narrator.cancel();
+  touring = true;
   btnTour.setAttribute('aria-pressed', 'true');
-  const next = () => select(BODIES[(current + 1) % BODIES.length], { fromTour: true });
-  next();
-  tourTimer = setInterval(next, 9000);
+  Sound.chime();
+  select(null, { fromTour: true });
+  Narrator.speak('เริ่มทัวร์ระบบสุริยะ', 'ยินดีต้อนรับสู่ทัวร์ระบบสุริยะ ' + OVERVIEW_TALK + ' เราจะเริ่มจากดวงอาทิตย์ แล้วเดินทางออกไปจนถึงดาวพลูโต',
+    () => { if (touring) tourTimer = setTimeout(tourStep, 600); });
 });
+
+// Read the current panel aloud
+btnSpeak.addEventListener('click', () => {
+  if (Narrator.speaking) { stopTour(); Narrator.cancel(); return; }
+  stopTour();
+  const b = current === -1 ? null : BODIES[current];
+  Narrator.speak(`กำลังบรรยาย · ${b ? b.th : 'ระบบสุริยะ'}`, narrationFor(b));
+});
+
+const btnSound = document.getElementById('btnSound');
+function setSound(v) {
+  Sound.setOn(v);
+  btnSound.setAttribute('aria-pressed', String(v));
+  btnSound.title = v ? 'ปิดเสียง (M)' : 'เปิดเสียง (M)';
+  document.getElementById('icoSound').innerHTML = v
+    ? '<path d="M2.5 6v4h2.5l3.5 3V3L5 6z" fill="currentColor"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.5a6 6 0 0 1 0 9"/>'
+    : '<path d="M2.5 6v4h2.5l3.5 3V3L5 6z" fill="currentColor"/><path d="m11 6 4 4m0-4-4 4"/>';
+  if (!v && Narrator.hasSpeech) speechSynthesis.cancel(); // captions keep going on their own timer
+  try { localStorage.setItem('solar-sound', v ? '1' : '0'); } catch (e) {}
+}
+btnSound.addEventListener('click', () => { Sound.init(); setSound(!Sound.on); Sound.tick(); });
+try { if (localStorage.getItem('solar-sound') === '0') setSound(false); } catch (e) {}
 
 window.addEventListener('keydown', e => {
   if (e.target.closest && e.target.closest('input')) return;
@@ -1447,6 +1747,7 @@ window.addEventListener('keydown', e => {
   else if (e.key === 'ArrowLeft') { step(-1); e.preventDefault(); }
   else if (e.key === 'Escape') select(null);
   else if (e.key === 'c' || e.key === 'C') setCutMode(!cutMode);
+  else if (e.key === 'm' || e.key === 'M') setSound(!Sound.on);
   else if (e.key === ' ' && !(e.target.closest && e.target.closest('button'))) { setPaused(!paused); e.preventDefault(); }
 });
 
@@ -1460,7 +1761,7 @@ function pickAt(cx, cy) {
   const hit = raycaster.intersectObjects(pickables, false)[0];
   return hit ? hit.object.userData.body : null;
 }
-canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; stopTour(); });
+canvas.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
 canvas.addEventListener('pointerup', e => {
   if (!down) return;
   const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
